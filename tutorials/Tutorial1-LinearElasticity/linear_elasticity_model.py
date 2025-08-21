@@ -104,7 +104,7 @@ def linear_elasticity_model(settings):
     L = settings['L']
     H = settings['H']
     
-    mesh = dl.RectangleMesh(dl.Point(0., 0.), dl.Point(L, H), nx, ny, "crossed")
+    mesh = dl.RectangleMesh(dl.Point(0., 0.), dl.Point(L, H), nx, ny)
     # mesh = dl.UnitSquareMesh(nx, ny)
     Vh2 = dl.VectorFunctionSpace(mesh, 'Lagrange', 1)
     Vh1 = dl.FunctionSpace(mesh, 'Lagrange', 1)

@@ -22,7 +22,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-data_dir', '--data_dir', type=str, default='data/full_state/', help="What directory for all data to be split")
 parser.add_argument('-input_basis', '--input_basis', type=str, default='as', help="What type of input basis? Choose from [kle] ")
-parser.add_argument('-output_basis', '--output_basis', type=str, default='None', help="What type of input basis? Choose from [pod] ")
+parser.add_argument('-output_basis', '--output_basis', type=str, default='none', help="What type of input basis? Choose from [pod] ")
 
 args = parser.parse_args()
 
@@ -44,12 +44,15 @@ else:
 input_encoder = np.load(args.data_dir + input_encoder_file)
 input_decoder = np.load(args.data_dir + input_decoder_file)
 
+if 'full_state' in args.data_dir.lower():
+	assert args.output_basis.lower() == 'pod'
+
 if args.output_basis.lower() == 'none':
 	output_encoder = None
 else:
 	if args.output_basis.lower() == 'pod':
 		output_encoder_file = 'POD/POD_encoder.npy'
-		output_shift_file = 'POD/u_shift.npy'
+		output_shift_file = 'POD/POD_shift.npy'
 	else:
 		raise
 

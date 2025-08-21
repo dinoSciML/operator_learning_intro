@@ -33,7 +33,7 @@ args = parser.parse_args()
 
 assert args.n_train <= 800 and args.n_train > 0
 
-data_dir = 'data/pointwise/'
+data_dir = 'data/full_state/'
 
 mq_data_dict = np.load(data_dir+'mq_data_reduced.npz')
 J_data_dict = np.load(data_dir+'JstarPhi_data_reduced.npz')
@@ -70,9 +70,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ################################################################################
 # L2 training
 hidden_layer_list = 4*[256]
-# model = GenericDense(input_dim = dM,hidden_layer_dim = 2*dM,output_dim = dQ).to(device)
 model = GenericDense(input_size = dM, output_size=dQ, hidden_layer_list = hidden_layer_list).to(device)
-# model = GenericDense(input_dim = dM,hidden_layer_dim = 2*dM,output_dim = dQ).to(device)
 
 n_epochs = 100
 loss_func = normalized_f_mse
@@ -85,7 +83,7 @@ network, history = l2_training(model,loss_func,train_loader, validation_loader,\
 
 rel_error = evaluate_l2_error(model,validation_loader)
 
-print('L2 relative error = ', rel_error)
+print('L2 relative error after L2 training = ', rel_error)
 
 torch.save(model.state_dict(), data_dir+'l2_model_'+str(args.n_train)+'.pth')
 
@@ -94,7 +92,6 @@ torch.save(model.state_dict(), data_dir+'l2_model_'+str(args.n_train)+'.pth')
 ################################################################################
 # DINO training
 
-# dino_model = GenericDense(input_dim = dM,hidden_layer_dim = 2*dM,output_dim = dQ).to(device)
 dino_model = GenericDense(input_size = dM, output_size=dQ, hidden_layer_list = hidden_layer_list).to(device)
 
 n_epochs = 100
@@ -117,7 +114,7 @@ network, history = h1_training(dino_model,loss_func_l2, loss_func_jac, dino_trai
 
 rel_error = evaluate_l2_error(dino_model,validation_loader)
 
-print('L2 relative error = ', rel_error)
+print('L2 relative error after H1 training = ', rel_error)
 
 torch.save(dino_model.state_dict(), data_dir+'dino_model_'+str(args.n_train)+'.pth')
 
