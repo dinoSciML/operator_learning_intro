@@ -45,7 +45,7 @@ def _weighted_l2_norm_vector(x, W):
 ################################################################################
 import argparse 
 parser = argparse.ArgumentParser()
-parser.add_argument('-data_dir', '--data_dir', type=str, default='data/pointwise/', help="Where to save")
+parser.add_argument('-data_dir', '--data_dir', type=str, default='data/full_state/', help="Where to save")
 parser.add_argument('-basis_type', '--basis_type', type=str, default='as', help="pod as or kle")
 parser.add_argument('-rank', '--rank', type=int, default=400, help="Active subspace rank")
 parser.add_argument('-oversample', '--oversample', type=int, default=10, help="Active subspace oversample")

@@ -20,8 +20,6 @@ import numpy as np
 
 import hippylib as hp
 
-
-
 def linear_elasticity_settings():
     # Define some basic settings for 
     settings = {'ndim': 2,

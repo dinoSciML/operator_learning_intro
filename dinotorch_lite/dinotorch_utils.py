@@ -16,27 +16,6 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 
-class GenericDense(nn.Module):
-    def __init__(self,  input_dim=50, hidden_layer_dim = 256, output_dim=20):
-        super().__init__()
-
-        self.hidden1 = nn.Linear(input_dim, hidden_layer_dim)
-        self.act1 = nn.GELU()
-        self.hidden2 = nn.Linear(hidden_layer_dim, hidden_layer_dim)
-        self.act2 = nn.GELU()
-        self.hidden3 = nn.Linear(hidden_layer_dim, hidden_layer_dim)
-        self.act3 = nn.GELU()
-        self.hidden4 = nn.Linear(hidden_layer_dim, hidden_layer_dim)
-        self.act4 = nn.GELU()
-        self.output = nn.Linear(hidden_layer_dim, output_dim)
-
-    def forward(self, x):
-        x = self.act1(self.hidden1(x))
-        x = self.act2(self.hidden2(x))
-        x = self.act3(self.hidden3(x))
-        x = self.act4(self.hidden4(x))
-        x = self.output(x)
-        return x
 
 
 def squared_f_norm(A):

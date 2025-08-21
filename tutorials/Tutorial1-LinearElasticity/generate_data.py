@@ -28,12 +28,14 @@ from linear_elasticity_model import *
 ################################################################################
 # Set up the model
 
-formulation = 'pointwise'
+formulation = 'full_state'
 
 assert formulation.lower() in ['full_state', 'pointwise']
 
 settings = linear_elasticity_settings()
 model = linear_elasticity_model(settings)
+
+data_dir = 'data/'+formulation+'/'
 
 ################################################################################
 # Generate training data
@@ -67,7 +69,7 @@ dataGenerator = hf.DataGenerator(observable,prior)
 nsamples = 1000
 n_samples_pod = 250
 pod_rank = 200
-data_dir = 'data/'+formulation+'/'
+
 
 if formulation.lower() == 'full_state':
 	dataGenerator.two_step_generate(nsamples,n_samples_pod = n_samples_pod, derivatives = (1,0),\
@@ -76,3 +78,21 @@ elif formulation.lower() == 'pointwise':
 	dataGenerator.generate(nsamples, derivatives = (1,0),output_decoder = output_decoder, data_dir = data_dir)
 else: 
 	raise
+
+d2v_state = dl.dof_to_vertex_map(Vh[hp.STATE])
+v2d_state = dl.vertex_to_dof_map(Vh[hp.STATE])
+d2v_state = d2v_state.astype(np.int64)
+v2d_state = v2d_state.astype(np.int64)
+
+d2v_param = dl.dof_to_vertex_map(Vh[hp.PARAMETER])
+v2d_param = dl.vertex_to_dof_map(Vh[hp.PARAMETER])
+d2v_param = d2v_param.astype(np.int64)
+v2d_param = v2d_param.astype(np.int64)
+
+nx = settings['nx']
+ny = settings['ny']
+
+np.savez(data_dir+'fno_metadata.npz',nx = nx, ny = ny,
+			d2v_state = d2v_state, d2v_param = d2v_param,
+			v2d_state = v2d_state, v2d_param = v2d_param)
+

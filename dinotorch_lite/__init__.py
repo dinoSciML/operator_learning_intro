@@ -19,4 +19,6 @@ from .evaluation_utils import *
 
 from .training_utils import *
 
+from .architectures import *
+
 # from .misfits import *

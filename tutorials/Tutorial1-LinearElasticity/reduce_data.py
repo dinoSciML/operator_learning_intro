@@ -20,7 +20,7 @@ import numpy as np
 ################################################################################
 import argparse 
 parser = argparse.ArgumentParser()
-parser.add_argument('-data_dir', '--data_dir', type=str, default='data/pointwise/', help="What directory for all data to be split")
+parser.add_argument('-data_dir', '--data_dir', type=str, default='data/full_state/', help="What directory for all data to be split")
 parser.add_argument('-input_basis', '--input_basis', type=str, default='as', help="What type of input basis? Choose from [kle] ")
 parser.add_argument('-output_basis', '--output_basis', type=str, default='None', help="What type of input basis? Choose from [pod] ")
 

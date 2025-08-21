@@ -69,7 +69,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ################################################################################
 # L2 training
-model = GenericDense(input_dim = dM,hidden_layer_dim = 2*dM,output_dim = dQ).to(device)
+hidden_layer_list = 4*[256]
+# model = GenericDense(input_dim = dM,hidden_layer_dim = 2*dM,output_dim = dQ).to(device)
+model = GenericDense(input_size = dM, output_size=dQ, hidden_layer_list = hidden_layer_list).to(device)
+# model = GenericDense(input_dim = dM,hidden_layer_dim = 2*dM,output_dim = dQ).to(device)
 
 n_epochs = 100
 loss_func = normalized_f_mse
@@ -91,7 +94,8 @@ torch.save(model.state_dict(), data_dir+'l2_model_'+str(args.n_train)+'.pth')
 ################################################################################
 # DINO training
 
-dino_model = GenericDense(input_dim = dM,hidden_layer_dim = 2*dM,output_dim = dQ).to(device)
+# dino_model = GenericDense(input_dim = dM,hidden_layer_dim = 2*dM,output_dim = dQ).to(device)
+dino_model = GenericDense(input_size = dM, output_size=dQ, hidden_layer_list = hidden_layer_list).to(device)
 
 n_epochs = 100
 loss_func_l2 = normalized_f_mse
