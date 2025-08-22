@@ -25,6 +25,10 @@ import hippyflow as hf
 
 from linear_elasticity_model import *
 
+sys.path.append('../../')
+
+from dinotorch_lite.hp_utils import operator_to_array_with_dummy_vectors
+
 ################################################################################
 # Set up the model
 
@@ -95,4 +99,21 @@ ny = settings['ny']
 np.savez(data_dir+'fno_metadata.npz',nx = nx, ny = ny,
 			d2v_state = d2v_state, d2v_param = d2v_param,
 			v2d_state = v2d_state, v2d_param = v2d_param)
+
+mat = dl.as_backend_type(M).mat()
+row, col, val = mat.getValuesCSR()
+
+import scipy.sparse as sp
+
+M_csr = sp.csr_matrix((val,col,row)) 
+M_csr = M_csr.astype(np.float32)
+sp.save_npz(data_dir+'M_output_csr',M_csr)
+
+
+input_vector = dl.Function(model.problem.Vh[hp.PARAMETER]).vector()
+R_np = operator_to_array_with_dummy_vectors(model.prior.R, input_vector, input_vector)
+
+np.save(data_dir+'R.npy',R_np)
+
+print('Process completed'.center(80))
 

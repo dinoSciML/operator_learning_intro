@@ -15,6 +15,7 @@
 import torch
 from torch import nn
 from torch.utils.data import Dataset
+import numpy as np
 
 
 
@@ -31,6 +32,44 @@ def normalized_f_mse(A_pred_batched, A_true_batched):
     err = f_mse(A_pred_batched, A_true_batched)
     normalization = torch.mean(torch.vmap(squared_f_norm)(A_true_batched), axis=0)
     return err / normalization
+
+
+def weighted_l2_error(M: torch.sparse):
+    def _weighted_l2_error(u_pred, u_true):
+        x = u_pred-u_true
+        Mx = torch.sparse.mm(M, torch.t(x))
+        return torch.mean(torch.einsum("ij,ji->i", x, Mx),axis = 0)
+    return _weighted_l2_error
+
+
+# def weighted_l2_norm(M):
+#     def _loss(x, reduction='sum'):
+#         if x.dim() == 1:
+#             # scalar: x^T M x
+#             return x.dot(torch.sparse.mv(M, x))
+#         # batch: x shape (B, n) -> per-sample quadratic forms
+#         x2 = x.reshape(-1, x.size(-1))          # (B, n)
+#         Mx = torch.sparse.mm(M, x2.T)           # (n, B)
+#         q  = torch.einsum('bn,nb->b', x2, Mx)   # (B,)
+#         if reduction == 'none': return q.view(*x.shape[:-1])
+#         return q.sum() if reduction == 'sum' else q.mean()
+#     return _loss
+
+def weighted_l2_norm(M):
+    spmm = (lambda A,B: A.matmul(B) if A.layout==torch.sparse_csr else torch.sparse.mm(A,B))
+    def loss(x, reduction='sum'):
+        X = x.reshape(-1, x.shape[-1])                 # (B,n)
+        q = (X * spmm(M, X.t()).t()).sum(1)            # (B,)
+        if x.dim()==1: return q[0]                     # scalar
+        return q if reduction=='none' else (q.sum() if reduction=='sum' else q.mean())
+    return loss
+
+def weighted_relative_mse(M: torch.sparse, tol=0.0):
+    def _weighted_relative_mse(pred, true):
+        return torch.mean(weighted_l2_norm(M, pred - true) / (weighted_l2_norm(M, true) + tol))
+
+    return _weighted_relative_mse
+
 
 
 
@@ -90,7 +129,14 @@ class DINODataset(Dataset):
 
 
 
+from scipy.sparse import csr_matrix
 
 
+def scipy_csr_to_torch_csr(A: csr_matrix) -> torch.Tensor:
+    # SciPy's index arrays are usually int32; PyTorch CSR needs int64.
+    crow = torch.from_numpy(A.indptr.astype(np.int64, copy=False))  # may copy only if type differs
+    col  = torch.from_numpy(A.indices.astype(np.int64, copy=False)) # may copy only if type differs
+    val  = torch.from_numpy(A.data)                                 # shares memory (no copy)
+    return torch.sparse_csr_tensor(crow, col, val, size=A.shape)
 
 

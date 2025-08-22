@@ -14,7 +14,7 @@
 #
 # For additional questions contact Thomas O'Leary-Roseberry
 #
-# Author: Blake Christiersen
+# Author: Blake Christierson
 
 from __future__ import annotations
 

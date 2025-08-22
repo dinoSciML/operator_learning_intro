@@ -17,7 +17,7 @@ import numpy as np
 
 from .dinotorch_utils import *
 
-def evaluate_l2_error(model,validation_loader):
+def evaluate_l2_error(model,validation_loader,error_func = squared_f_error):
 
     device = next(model.parameters()).device
 
