@@ -26,7 +26,12 @@ def evaluate_l2_error(model,validation_loader,error_func = squared_f_error):
         validation_error = 0
         validation_denom = 0
         for batch in validation_loader:
-            m, u = batch
+            if len(batch) ==3:
+                m, u, _ = batch
+            elif len(batch) == 2:
+                m, u = batch
+            else:
+                raise
             m = m.to(device)
             u = u.to(device)
             u_pred = model(m)

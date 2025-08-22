@@ -16,9 +16,74 @@
 import os
 
 
+def default_settings():
+	settings = {}
+	settings['architecture'] = 'rbno'
+	settings['formulation'] = 'l2'
+	settings['output_type'] = 'full_state'
+	settings['n_train'] = 800
+
+	return settings
+
+
+def build_string(settings):
+	command = 'python training_driver.py'
+	command+=' '
+	for key,value in settings.items():
+		command += '-'+key
+		command += ' '
+		command += str(value)
+		command += ' '
+	return command
+
 n_trains = [25,50,100,200,400,800]
 
+# #################################################################################
+# # RBNO
+# architecture = 'rbno'
+# output_types = ['full_state', 'observable']
+# formulations = ['l2','h1']
+
+# for n_train in n_trains:
+# 	for output_type in output_types:
+# 		for formulation in formulations:
+# 			settings = default_settings()
+# 			settings['n_train'] = n_train
+# 			settings['architecture'] = architecture
+# 			settings['output_type'] = output_type
+# 			settings['formulation'] = formulation
+# 			print(build_string(settings))
+# 			os.system(build_string(settings))
+
+#################################################################################
+# FNO
+architecture = 'fno'
+output_type = 'full_state'
+formulation = 'l2'
+
 for n_train in n_trains:
-	print(80*'#')
-	print(f'Training for n_train = {n_train}'.center(80))
-	os.system('python train_networks.py -n_train '+str(n_train))
+	settings = default_settings()
+	settings['n_train'] = n_train
+	settings['architecture'] = architecture
+	settings['output_type'] = output_type
+	settings['formulation'] = formulation
+	print(build_string(settings))
+	os.system(build_string(settings))
+
+#################################################################################
+# DeepONet
+
+# architecture = 'don'
+# output_type = 'full_state'
+# formulation = 'l2'
+
+# for n_train in n_trains:
+# 	settings = default_settings()
+# 	settings['n_train'] = n_train
+# 	settings['architecture'] = architecture
+# 	settings['output_type'] = output_type
+# 	settings['formulation'] = formulation
+# 	print(build_string(settings))
+# 	os.system(build_string(settings))
+
+

@@ -29,17 +29,26 @@ sys.path.append('../../')
 
 from dinotorch_lite.hp_utils import operator_to_array_with_dummy_vectors
 
+
+import argparse 
+parser = argparse.ArgumentParser()
+parser.add_argument('-output_type', '--output_type', type=str, default='full_state', help="What directory for all data to be split")
+parser.add_argument('-input_basis', '--input_basis', type=str, default='as', help="What type of input basis? Choose from [kle] ")
+parser.add_argument('-output_basis', '--output_basis', type=str, default='none', help="What type of input basis? Choose from [pod] ")
+
+args = parser.parse_args()
+
 ################################################################################
 # Set up the model
 
-formulation = 'full_state'
+output_type = args.output_type
 
-assert formulation.lower() in ['full_state', 'pointwise']
+assert output_type.lower() in ['full_state', 'observable']
 
 settings = linear_elasticity_settings()
 model = linear_elasticity_model(settings)
 
-data_dir = 'data/'+formulation+'/'
+data_dir = 'data/'+output_type+'/'
 
 ################################################################################
 # Generate training data
@@ -48,14 +57,14 @@ Vh = model.problem.Vh
 
 mesh = Vh[hp.STATE].mesh()
 
-if formulation.lower() == 'full_state':
+if output_type.lower() == 'full_state':
 	q_trial = dl.TrialFunction(Vh[hp.STATE])
 	q_test = dl.TestFunction(Vh[hp.STATE])
 	M = dl.PETScMatrix(mesh.mpi_comm())
 	dl.assemble(dl.inner(q_trial,q_test) * dl.dx, tensor=M)
 	B = hf.StateSpaceIdentityOperator(M, use_mass_matrix=False)
 	output_decoder = None
-elif formulation.lower() == 'pointwise':
+elif output_type.lower() == 'observable':
 	B = model.misfit.B
 	q = dl.Vector()
 	B.init_vector(q,0)
@@ -75,45 +84,48 @@ n_samples_pod = 250
 pod_rank = 200
 
 
-if formulation.lower() == 'full_state':
+if output_type.lower() == 'full_state':
 	dataGenerator.two_step_generate(nsamples,n_samples_pod = n_samples_pod, derivatives = (1,0),\
 		 pod_rank = pod_rank, data_dir = data_dir)
-elif formulation.lower() == 'pointwise':
+elif output_type.lower() == 'observable':
 	dataGenerator.generate(nsamples, derivatives = (1,0),output_decoder = output_decoder, data_dir = data_dir)
 else: 
 	raise
 
-d2v_state = dl.dof_to_vertex_map(Vh[hp.STATE])
-v2d_state = dl.vertex_to_dof_map(Vh[hp.STATE])
-d2v_state = d2v_state.astype(np.int64)
-v2d_state = v2d_state.astype(np.int64)
 
-d2v_param = dl.dof_to_vertex_map(Vh[hp.PARAMETER])
-v2d_param = dl.vertex_to_dof_map(Vh[hp.PARAMETER])
-d2v_param = d2v_param.astype(np.int64)
-v2d_param = v2d_param.astype(np.int64)
+if output_type.lower() == 'full_state':
+	d2v_state = dl.dof_to_vertex_map(Vh[hp.STATE])
+	v2d_state = dl.vertex_to_dof_map(Vh[hp.STATE])
+	d2v_state = d2v_state.astype(np.int64)
+	v2d_state = v2d_state.astype(np.int64)
 
-nx = settings['nx']
-ny = settings['ny']
+	d2v_param = dl.dof_to_vertex_map(Vh[hp.PARAMETER])
+	v2d_param = dl.vertex_to_dof_map(Vh[hp.PARAMETER])
+	d2v_param = d2v_param.astype(np.int64)
+	v2d_param = v2d_param.astype(np.int64)
 
-np.savez(data_dir+'fno_metadata.npz',nx = nx, ny = ny,
-			d2v_state = d2v_state, d2v_param = d2v_param,
-			v2d_state = v2d_state, v2d_param = v2d_param)
-
-mat = dl.as_backend_type(M).mat()
-row, col, val = mat.getValuesCSR()
-
-import scipy.sparse as sp
-
-M_csr = sp.csr_matrix((val,col,row)) 
-M_csr = M_csr.astype(np.float32)
-sp.save_npz(data_dir+'M_output_csr',M_csr)
+	nx = settings['nx']
+	ny = settings['ny']
 
 
-input_vector = dl.Function(model.problem.Vh[hp.PARAMETER]).vector()
-R_np = operator_to_array_with_dummy_vectors(model.prior.R, input_vector, input_vector)
+	np.savez(data_dir+'fno_metadata.npz',nx = nx, ny = ny,
+				d2v_state = d2v_state, d2v_param = d2v_param,
+				v2d_state = v2d_state, v2d_param = v2d_param)
 
-np.save(data_dir+'R.npy',R_np)
+	mat = dl.as_backend_type(M).mat()
+	row, col, val = mat.getValuesCSR()
 
-print('Process completed'.center(80))
+	import scipy.sparse as sp
+
+	M_csr = sp.csr_matrix((val,col,row)) 
+	M_csr = M_csr.astype(np.float32)
+	sp.save_npz(data_dir+'M_output_csr',M_csr)
+
+
+	input_vector = dl.Function(model.problem.Vh[hp.PARAMETER]).vector()
+	R_np = operator_to_array_with_dummy_vectors(model.prior.R, input_vector, input_vector)
+
+	np.save(data_dir+'R.npy',R_np)
+
+	print('Process completed'.center(80))
 

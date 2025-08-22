@@ -63,9 +63,9 @@ from torch import nn
 #         return x
 
 
-class GenericDense(nn.Module):
+class MLP(nn.Module):
     def __init__(self, input_size,  output_size, hidden_layer_list = 4*[256], activation_fn = torch.nn.GELU()):
-        super(GenericDense, self).__init__()
+        super(MLP, self).__init__()
         self.hidden_layers = nn.ModuleList()
         prev_layer_size = input_size
         for hidden_size in hidden_layer_list:
