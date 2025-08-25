@@ -64,9 +64,20 @@ def weighted_l2_norm(M):
         return q if reduction=='none' else (q.sum() if reduction=='sum' else q.mean())
     return loss
 
+# def weighted_relative_mse(M: torch.sparse, tol=0.0):
+#     def _weighted_relative_mse(pred, true):
+#         return torch.mean(weighted_l2_norm(M, pred - true) / (weighted_l2_norm(M, true) + tol))
+
+#     return _weighted_relative_mse
+
+def weighted_squared_norm(M: torch.sparse, x: torch.Tensor) -> torch.Tensor:
+    Mx = torch.sparse.mm(M, torch.t(x))
+    return torch.einsum("ij,ji->i", x, Mx)
+
+
 def weighted_relative_mse(M: torch.sparse, tol=0.0):
     def _weighted_relative_mse(pred, true):
-        return torch.mean(weighted_l2_norm(M, pred - true) / (weighted_l2_norm(M, true) + tol))
+        return torch.mean(weighted_squared_norm(M, pred - true) / (weighted_squared_norm(M, true) + tol))
 
     return _weighted_relative_mse
 
