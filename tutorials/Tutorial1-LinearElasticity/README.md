@@ -27,20 +27,26 @@ Use `git clone` and set `HIPPYFLOW_PATH`.
 
 ##
 
-1. To see the setup for the deterministic inverse problem see `LinearElasticityMAP.ipynb`
+1. To see the setup for the parametric PDE map and deterministic inverse problem see `LinearElasticityIntro.ipynb`
 
-MAP stands for maximum a posteriori point; i.e., drawing the connection between the most probably point of the Bayesian posterior and the deterministic inversion
-
-2. To train neural operators use the following steps:
+2. To train neural operators (RBNO, FNO, DeepONet) use the following steps:
 
 ```
-python generate_data.py # This generates the samples
-python compute_coders.py # This computes the reduced bases
-python reduce_data.py # This encodes the training data onto the reduced bases
+# Full-state
+python generate_data.py # This generates the samples for the full-state training
+python compute_coders.py # This computes the reduced bases (needed for RBNO only)
+python reduce_data.py # This encodes the training data onto the reduced bases (needed for RBNO only)
+
+# Observables only
+python generate_data.py -output_type observable # This generates the samples for the RB observable networks
+python compute_coders.py -data_dir data/observable/ # This computes the reduced bases (needed for RBNO only)
+python reduce_data.py -data_dir data/observable/ -output_basis None # This encodes the training data onto the reduced bases (needed for RBNO only)
+
+# To train all the networks:
 python training_loop.py # This trains a bunch of neural operators
 
 ```
 
-For more information on the training see the notebook `LinearElasticityTraining.ipynb`
+For more information on the training see the notebooks `LinearElasticityRBNO.ipynb`, `LinearElasticityFNO.ipynb`, `LinearElasticityDON.ipynb`
 
 3. To visualize the results of the training for inverse problems, see the `LinearElasticityIPComparisons.ipynb` notebook. 

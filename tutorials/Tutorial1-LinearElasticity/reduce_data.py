@@ -22,7 +22,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-data_dir', '--data_dir', type=str, default='data/full_state/', help="What directory for all data to be split")
 parser.add_argument('-input_basis', '--input_basis', type=str, default='as', help="What type of input basis? Choose from [kle] ")
-parser.add_argument('-output_basis', '--output_basis', type=str, default='none', help="What type of input basis? Choose from [pod] ")
+parser.add_argument('-output_basis', '--output_basis', type=str, default='pod', help="What type of input basis? Choose from [pod] ")
 
 args = parser.parse_args()
 
