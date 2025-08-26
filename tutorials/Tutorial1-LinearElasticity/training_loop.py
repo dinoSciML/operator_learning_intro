@@ -38,52 +38,54 @@ def build_string(settings):
 
 n_trains = [25,50,100,200,400,800]
 
-# #################################################################################
-# # RBNO
-# architecture = 'rbno'
-# output_types = ['full_state', 'observable']
-# formulations = ['l2','h1']
+#################################################################################
+# RBNO
+architecture = 'rbno'
+output_types = ['full_state', 'observable']
+formulations = ['l2','h1']
 
-# for n_train in n_trains:
-# 	for output_type in output_types:
-# 		for formulation in formulations:
-# 			settings = default_settings()
-# 			settings['n_train'] = n_train
-# 			settings['architecture'] = architecture
-# 			settings['output_type'] = output_type
-# 			settings['formulation'] = formulation
-# 			print(build_string(settings))
-# 			os.system(build_string(settings))
+for n_train in n_trains:
+	for output_type in output_types:
+		for formulation in formulations:
+			settings = default_settings()
+			settings['n_train'] = n_train
+			settings['architecture'] = architecture
+			settings['output_type'] = output_type
+			settings['formulation'] = formulation
+			print(build_string(settings))
+			os.system(build_string(settings))
 
 #################################################################################
 # FNO
 architecture = 'fno'
 output_type = 'full_state'
-formulation = 'l2'
+formulations = ['l2','h1']
 
 for n_train in n_trains:
-	settings = default_settings()
-	settings['n_train'] = n_train
-	settings['architecture'] = architecture
-	settings['output_type'] = output_type
-	settings['formulation'] = formulation
-	print(build_string(settings))
-	os.system(build_string(settings))
+	for formulation in formulations:
+		settings = default_settings()
+		settings['n_train'] = n_train
+		settings['architecture'] = architecture
+		settings['output_type'] = output_type
+		settings['formulation'] = formulation
+		print(build_string(settings))
+		os.system(build_string(settings))
 
 #################################################################################
 # DeepONet
 
-# architecture = 'don'
-# output_type = 'full_state'
-# formulation = 'l2'
+architecture = 'don'
+output_type = 'full_state'
+formulations = ['l2','h1']
 
-# for n_train in n_trains:
-# 	settings = default_settings()
-# 	settings['n_train'] = n_train
-# 	settings['architecture'] = architecture
-# 	settings['output_type'] = output_type
-# 	settings['formulation'] = formulation
-# 	print(build_string(settings))
-# 	os.system(build_string(settings))
+for n_train in n_trains:
+	for formulation in formulations:
+		settings = default_settings()
+		settings['n_train'] = n_train
+		settings['architecture'] = architecture
+		settings['output_type'] = output_type
+		settings['formulation'] = formulation
+		print(build_string(settings))
+		os.system(build_string(settings))
 
 

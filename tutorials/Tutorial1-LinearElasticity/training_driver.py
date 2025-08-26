@@ -19,6 +19,8 @@ from torch import nn
 import numpy as np
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import time
+import pickle
 
 sys.path.append('../../')
 
@@ -72,8 +74,8 @@ if architecture in ['fno','don']:
 formulation = args.formulation.lower()
 assert formulation in ['l2','h1']
 
-if formulation == 'h1':
-    assert architecture == 'rbno', 'DIFNO and DIDON not implemented'
+# if formulation == 'h1':
+#     assert architecture == 'rbno', 'DIFNO and DIDON not implemented'
 
 batch_size = args.batch_size
 n_epochs = args.n_epochs
@@ -95,6 +97,7 @@ if architecture == 'rbno':
         J_data_dict = np.load(data_dir+'JstarPhi_data_reduced.npz')
         J_data = J_data_dict['J_data'][:,:rQ,:rM]
         assert J_data.shape == (n_data,dQ,dM)
+        output_projector = None
 
 elif architecture in ['fno','don']:
     mq_data_dict = np.load(data_dir+'mq_data.npz')
@@ -109,6 +112,13 @@ elif architecture in ['fno','don']:
         v2d = fno_metadata['v2d_param']
         nx = fno_metadata['nx']
         ny = fno_metadata['ny']
+    rQ = args.rQ
+    if formulation == 'h1':
+        J_data_dict = np.load(data_dir+'JstarPhi_data.npz',allow_pickle=True)
+        J_data = J_data_dict['JstarPhi_data'].transpose((0,2,1))[:,:rQ,:]
+        POD_encoder = np.load(data_dir+'POD/POD_encoder.npy')[:,:rQ]
+        output_projector = torch.Tensor(POD_encoder).to(torch.float32)
+
 
 assert args.n_train + n_test  <= n_data and args.n_train > 0
 
@@ -145,7 +155,12 @@ elif architecture == 'fno':
     model = VectorFNO2D(v2d=[d2v, d2v], d2v=[v2d, v2d], nx=nx, ny=ny, dim=2, settings=model_settings).to(device) 
 
 elif architecture == 'don':
-    raise
+    hidden_layer_list = args.depth*[args.width]
+    model = DeepONetNodal(dM,dQ,rQ, branch_hidden = hidden_layer_list)
+# print(sum(p.numel() for p in model.parameters() if p.requires_grad))
+
+nweights = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
 
 
 ################################################################################
@@ -156,18 +171,26 @@ optimizer = torch.optim.Adam(model.parameters())
 
 loss_func_l2 = normalized_f_mse
 
+t0_train = time.perf_counter()
 if formulation == 'l2':
     network, history = l2_training(model,loss_func_l2,train_loader, validation_loader,\
                      optimizer,lr_scheduler=lr_scheduler,n_epochs = n_epochs)
 else:
     loss_func_jac = normalized_f_mse
     network, history = h1_training(model,loss_func_l2, loss_func_jac, train_loader, validation_loader,\
-                             optimizer,lr_scheduler=lr_scheduler,n_epochs = n_epochs, verbose=True)
+                             optimizer,lr_scheduler=lr_scheduler,n_epochs = n_epochs, verbose=True,\
+                                                            output_projector = output_projector)
+training_time = time.perf_counter() - t0_train
+
+metadata = {'nweights': nweights, 'training_time': training_time,'history':history}
 
 
 rel_error = evaluate_l2_error(model,validation_loader)
 
 print('L2 relative error after training = ', rel_error)
+
+model_dir = data_dir +'trained_networks/'
+os.makedirs(model_dir, exist_ok = True)
 
 model_name = architecture + '_'
 if output_type == 'observable':
@@ -175,9 +198,10 @@ if output_type == 'observable':
 
 model_name += formulation + '_ndata_'+str(args.n_train)
 
-model_name += '.pth'
+torch.save(model.state_dict(), model_dir+model_name+'.pth')
 
-torch.save(model.state_dict(), data_dir+model_name)
-
+metadata_name = model_name + '_metadata.pkl'
+with open(model_dir+metadata_name, "wb") as f:
+    pickle.dump(metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 print('Process completed.'.center(80))

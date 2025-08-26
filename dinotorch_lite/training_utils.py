@@ -70,11 +70,16 @@ def l2_training(model,loss_func,train_loader, validation_loader,\
 
 def h1_training(model,loss_func_l2,loss_func_jac,train_loader, validation_loader,\
                      optimizer,lr_scheduler=None,n_epochs = 100, verbose = False,\
-                     mode="forward", jac_weight = 1.0):
+                     mode="forward", jac_weight = 1.0, output_projector = None):
     device = next(model.parameters()).device
 
-    def forward_pass(m):
-        return model(torch.reshape(m, (-1, m.shape[-1])))
+    if output_projector is None:
+        def forward_pass(m):
+            return model(torch.reshape(m, (-1, m.shape[-1])))
+    else:
+        # This case assumes a full state output and reduces it pre-emptively.
+        def forward_pass(m):
+            return model(torch.reshape(m, (-1, m.shape[-1])))@ output_projector
 
     if mode == "forward":
         jac_func = torch.func.vmap(torch.func.jacfwd(forward_pass))
