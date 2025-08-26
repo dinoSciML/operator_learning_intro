@@ -44,7 +44,12 @@ python reduce_data.py -data_dir data/observable/ -output_basis None # This encod
 
 # To train all the networks:
 python training_loop.py # This trains a bunch of neural operators
+```
 
+or simply execute
+
+```
+python run_everything.py
 ```
 
 For more information on the training see the notebooks `LinearElasticityRBNO.ipynb`, `LinearElasticityFNO.ipynb`, `LinearElasticityDON.ipynb`
