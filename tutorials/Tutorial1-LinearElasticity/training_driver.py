@@ -74,9 +74,6 @@ if architecture in ['fno','don']:
 formulation = args.formulation.lower()
 assert formulation in ['l2','h1']
 
-# if formulation == 'h1':
-#     assert architecture == 'rbno', 'DIFNO and DIDON not implemented'
-
 batch_size = args.batch_size
 n_epochs = args.n_epochs
 
