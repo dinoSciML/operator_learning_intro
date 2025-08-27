@@ -49,8 +49,10 @@ parser.add_argument('-rM', '--rM', type=int, default=100, help="Reduced dimensio
 parser.add_argument('-rQ', '--rQ', type=int, default=100, help="Reduced dimension for output (RBNO)")
 
 # FNO Hyperparameters
-parser.add_argument('-modes1', '--modes1', type=int, default=4, help="Modes for the first dimension")
-parser.add_argument('-modes2', '--modes2', type=int, default=4, help="Modes for the second dimension")
+parser.add_argument('-modes1', '--modes1', type=int, default=16, help="Modes for the first dimension")
+parser.add_argument('-modes2', '--modes2', type=int, default=8, help="Modes for the second dimension")
+parser.add_argument('-channels', '--channels', type=int, default=32, help="FNO channels")
+
 
 # DON Hyperparameters
 
@@ -148,7 +150,7 @@ if architecture == 'rbno':
     model = MLP(input_size = dM, output_size=dQ, hidden_layer_list = hidden_layer_list).to(device)
 
 elif architecture == 'fno':
-    model_settings = fno2d_settings(modes1=args.modes1, modes2=args.modes2, width=args.width, n_layers=args.depth, d_out=2)
+    model_settings = fno2d_settings(modes1=args.modes1, modes2=args.modes2, width=args.channels, n_layers=args.depth, d_out=2)
     model = VectorFNO2D(v2d=[d2v, d2v], d2v=[v2d, v2d], nx=nx, ny=ny, dim=2, settings=model_settings).to(device) 
 
 elif architecture == 'don':

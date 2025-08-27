@@ -45,24 +45,27 @@ def map_estimate(neural_op,  model, R=None, iterations = 100,\
         # R = R.to(device)
         regularization = lambda m: 0.5*weighted_l2_norm(R)(m- m0)
     lbfgs = opt.LBFGS([m], line_search_fn='strong_wolfe')
+
     
     def closure():
         lbfgs.zero_grad()
+        m_in = m.unsqueeze(0)  
         if output_type == 'observable':
-            objective = likelihood(q=neural_op(m)) + regularization(m)
+            objective = likelihood(q=neural_op(m_in).squeeze(0)) + regularization(m)
         else:
-            objective = likelihood(u=neural_op(m)) + regularization(m)
+            objective = likelihood(u=neural_op(m_in).squeeze(0)) + regularization(m)
         objective.backward(retain_graph=True)
         return objective
     
     iteration, gradnorm = 0, 1
     lbfgs_history = []
     for iteration in range(iterations):
+        m_in = m.unsqueeze(0)  
         if output_type == 'observable':
-            history = {'L': likelihood(q=neural_op(m)).item(), 
+            history = {'L': likelihood(q=neural_op(m_in).squeeze(0)).item(), 
                     'R': regularization(m)}
         else:
-            history = {'L': likelihood(u=neural_op(m)).item(), 
+            history = {'L': likelihood(u=neural_op(m_in).squeeze(0)).item(), 
                     'R': regularization(m)}
         lbfgs_history.append(history)
         lbfgs.step(closure)

@@ -22,6 +22,7 @@ def default_settings():
 	settings['formulation'] = 'l2'
 	settings['output_type'] = 'full_state'
 	settings['n_train'] = 800
+	settings['width'] = 256
 
 	return settings
 
@@ -68,6 +69,7 @@ for n_train in n_trains:
 		settings['architecture'] = architecture
 		settings['output_type'] = output_type
 		settings['formulation'] = formulation
+
 		print(build_string(settings))
 		os.system(build_string(settings))
 
