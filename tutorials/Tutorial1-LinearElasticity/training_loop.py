@@ -23,6 +23,9 @@ def default_settings():
 	settings['output_type'] = 'full_state'
 	settings['n_train'] = 800
 	settings['width'] = 256
+	settings['n_epochs'] = 200
+	settings['rM'] = 50
+	settings['rQ'] = 50
 
 	return settings
 
