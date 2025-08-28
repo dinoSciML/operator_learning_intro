@@ -173,31 +173,34 @@ class VectorFNO2D(torch.nn.Module):
         self._ny = ny
         self._dim = dim
 
-    # def forward(self, x: torch.Tensor) -> torch.Tensor:
-    #     x = x[:, self._d2v[INPUT]]
-    #     x = x.view(x.shape[0], 1, self._nx+1, self._ny+1)
-    #     out = self._FNO2d.forward(x)
-    #     out = out.reshape(out.shape[0], self._dim, -1)
-    #     out = out[:, :, self._v2d[OUTPUT]]
-    #     out = out.permute(0, 2, 1)
-    #     out = out.reshape(out.shape[0], -1)
-    #     return out
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        added_batch = False
-        if x.dim() == 1:                 # add batch dim for MAP case
-            x = x.unsqueeze(0)           # (1, n)
-            added_batch = True
-
-        idx_in  = self._d2v[INPUT].to(x.device).long()
-        x = x.index_select(1, idx_in)    # (B, n_in_dofs)
-
+        x = x[:, self._d2v[INPUT]]
         x = x.view(x.shape[0], 1, self._nx+1, self._ny+1)
-        out = self._FNO2d(x)
+        out = self._FNO2d.forward(x)
         out = out.reshape(out.shape[0], self._dim, -1)
+        out = out[:, :, self._v2d[OUTPUT]]
+        out = out.permute(0, 2, 1)
+        out = out.reshape(out.shape[0], -1)
+        return out
 
-        idx_out = self._v2d[OUTPUT].to(out.device).long()
-        out = out[:, :, idx_out]         # (B, dim, n_vertices)
-        out = out.permute(0, 2, 1).reshape(out.shape[0], -1)  # (B, dim*n_vertices)
+    # def forward(self, x: torch.Tensor) -> torch.Tensor:
+    #     added_batch = False
+    #     if x.dim() == 1:                 # add batch dim for MAP case
+    #         x = x.unsqueeze(0)           # (1, n)
+    #         added_batch = True
 
-        return out.squeeze(0) if added_batch else out
+    #     idx_in  = self._d2v[INPUT].to(x.device).long()
+    #     x = x.index_select(1, idx_in)    # (B, n_in_dofs)
+
+    #     x = x.view(x.shape[0], 1, self._nx+1, self._ny+1)
+    #     out = self._FNO2d(x)
+    #     out = out.reshape(out.shape[0], self._dim, -1)
+
+    #     idx_out = self._v2d[OUTPUT].to(out.device).long()
+    #     out = out[:, :, idx_out]         # (B, dim, n_vertices)
+    #     out = out.permute(0, 2, 1).reshape(out.shape[0], -1)  # (B, dim*n_vertices)
+
+    #     return out.squeeze(0) if added_batch else out
+
+
+        
