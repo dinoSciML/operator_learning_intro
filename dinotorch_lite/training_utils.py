@@ -70,7 +70,8 @@ def l2_training(model,loss_func,train_loader, validation_loader,\
 
 def h1_training(model,loss_func_l2,loss_func_jac,train_loader, validation_loader,\
                      optimizer,lr_scheduler=None,n_epochs = 100, verbose = False,\
-                     mode="forward", jac_weight = 1.0, output_projector = None):
+                     mode="forward", jac_weight = 1.0, output_projector = None,\
+                     slow_jac = False):
     device = next(model.parameters()).device
 
     if output_projector is None:
@@ -104,7 +105,11 @@ def h1_training(model,loss_func_l2,loss_func_jac,train_loader, validation_loader
             u = u.to(device)
             J = J.to(device)
             u_pred = model(m)
-            J_pred = jac_func(m)
+            if slow_jac:
+                J_pred = [jac_func(m[i:i+1]) for i in range(m.shape[0])]
+                J_pred = torch.cat(J_pred, dim=0)
+            else:
+                J_pred = jac_func(m)
             loss_l2 = loss_func_l2(u_pred, u)
             loss_jac = loss_func_jac(J_pred, J)
             loss = loss_l2 + jac_weight * loss_jac
