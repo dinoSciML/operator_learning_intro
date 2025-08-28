@@ -178,6 +178,10 @@ if formulation == 'l2':
                      optimizer,lr_scheduler=lr_scheduler,n_epochs = n_epochs)
 else:
     loss_func_jac = normalized_f_mse
+    if architecture == 'fno':
+        slow_jac = True
+    else:
+        slow_jac = False
     network, history = h1_training(model,loss_func_l2, loss_func_jac, train_loader, validation_loader,\
                              optimizer,lr_scheduler=lr_scheduler,n_epochs = n_epochs, verbose=True,\
                                             output_projector = output_projector)
