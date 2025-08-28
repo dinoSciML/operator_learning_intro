@@ -61,6 +61,7 @@ for n_train in n_trains:
 
 #################################################################################
 # FNO
+os.system('export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True')
 architecture = 'fno'
 output_type = 'full_state'
 formulations = ['l2','h1']
