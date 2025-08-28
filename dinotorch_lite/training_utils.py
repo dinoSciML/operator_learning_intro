@@ -74,12 +74,11 @@ def h1_training(model,loss_func_l2,loss_func_jac,train_loader, validation_loader
                      slow_jac = False):
     device = next(model.parameters()).device
 
-    output_projector = output_projector.to(device)
-
     if output_projector is None:
         def forward_pass(m):
             return model(torch.reshape(m, (-1, m.shape[-1])))
     else:
+        output_projector = output_projector.to(device)
         # This case assumes a full state output and reduces it pre-emptively.
         def forward_pass(m):
             return model(torch.reshape(m, (-1, m.shape[-1])))@ output_projector
