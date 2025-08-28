@@ -107,8 +107,8 @@ elif architecture in ['fno','don']:
     assert n_data == _n_data
     if architecture == 'fno':
         fno_metadata = np.load(data_dir+'fno_metadata.npz')
-        d2v = fno_metadata['d2v_param']
-        v2d = fno_metadata['v2d_param']
+        d2v = torch.Tensor(fno_metadata['d2v_param']).to(torch.float32)
+        v2d = torch.Tensor(fno_metadata['v2d_param']).to(torch.float32)
         nx = fno_metadata['nx']
         ny = fno_metadata['ny']
     rQ = args.rQ
