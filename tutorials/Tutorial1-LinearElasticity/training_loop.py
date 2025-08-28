@@ -75,7 +75,7 @@ for n_train in n_trains:
 		settings['output_type'] = output_type
 		settings['formulation'] = formulation
 		if formulation == 'h1':
-			settings['channels'] /= 2 
+			settings['channels'] = int(settings['channels']/2)
 
 		print(build_string(settings))
 		os.system(build_string(settings))
