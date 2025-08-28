@@ -24,8 +24,8 @@ def default_settings():
 	settings['n_train'] = 800
 	settings['width'] = 256
 	settings['n_epochs'] = 200
-	settings['rM'] = 50
-	settings['rQ'] = 50
+	settings['rM'] = 100
+	settings['rQ'] = 100
 
 	return settings
 

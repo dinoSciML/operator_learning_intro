@@ -45,8 +45,8 @@ parser.add_argument('-depth', '--depth', type=int, default=4, help="Number of hi
 parser.add_argument('-width', '--width', type=int, default=256, help="Dimension for hidden latent representation")
 
 # RBNO Hyperparameters
-parser.add_argument('-rM', '--rM', type=int, default=50, help="Reduced dimension for input (RBNO)")
-parser.add_argument('-rQ', '--rQ', type=int, default=50, help="Reduced dimension for output (RBNO)")
+parser.add_argument('-rM', '--rM', type=int, default=100, help="Reduced dimension for input (RBNO)")
+parser.add_argument('-rQ', '--rQ', type=int, default=100, help="Reduced dimension for output (RBNO)")
 
 # FNO Hyperparameters
 parser.add_argument('-modes1', '--modes1', type=int, default=16, help="Modes for the first dimension")
