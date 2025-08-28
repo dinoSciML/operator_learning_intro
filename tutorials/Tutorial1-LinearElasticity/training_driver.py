@@ -161,7 +161,7 @@ elif architecture == 'don':
 # print(sum(p.numel() for p in model.parameters() if p.requires_grad))
 
 nweights = sum(p.numel() for p in model.parameters() if p.requires_grad)
-
+print(f'nweights = {nweights}'.center(80))
 
 
 ################################################################################
@@ -178,13 +178,9 @@ if formulation == 'l2':
                      optimizer,lr_scheduler=lr_scheduler,n_epochs = n_epochs)
 else:
     loss_func_jac = normalized_f_mse
-    if architecture == 'fno':
-        slow_jac = True
-    else:
-        slow_jac = False
     network, history = h1_training(model,loss_func_l2, loss_func_jac, train_loader, validation_loader,\
                              optimizer,lr_scheduler=lr_scheduler,n_epochs = n_epochs, verbose=True,\
-                                            output_projector = output_projector, slow_jac = slow_jac)
+                                            output_projector = output_projector)
 training_time = time.perf_counter() - t0_train
 
 metadata = {'nweights': nweights, 'training_time': training_time,'history':history}

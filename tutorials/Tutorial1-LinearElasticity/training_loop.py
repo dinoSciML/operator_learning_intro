@@ -26,6 +26,7 @@ def default_settings():
 	settings['n_epochs'] = 200
 	settings['rM'] = 100
 	settings['rQ'] = 100
+	settings['channels'] = 32
 
 	return settings
 
@@ -61,7 +62,7 @@ for n_train in n_trains:
 
 #################################################################################
 # FNO
-os.system('export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True')
+# os.system('export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True')
 architecture = 'fno'
 output_type = 'full_state'
 formulations = ['l2','h1']
@@ -73,6 +74,8 @@ for n_train in n_trains:
 		settings['architecture'] = architecture
 		settings['output_type'] = output_type
 		settings['formulation'] = formulation
+		if formulation == 'h1':
+			settings['channels'] = 
 
 		print(build_string(settings))
 		os.system(build_string(settings))
