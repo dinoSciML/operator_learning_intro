@@ -276,51 +276,111 @@ def projector2d(x, s=None):
 # 2d Fourier layers
 #
 ################################################################
+# class SpectralConv2d(nn.Module):
+#     def __init__(self, in_channels, out_channels, modes1, modes2):
+#         """
+#         Fourier integral operator layer defined for functions over the torus. Maps functions to functions.
+#         """
+#         super(SpectralConv2d, self).__init__()
+
+#         self.in_channels = in_channels
+#         self.out_channels = out_channels
+
+#         # Number of Fourier modes to multiply, at most floor(N/2) + 1
+#         self.modes1 = modes1 
+#         self.modes2 = modes2
+
+#         self.scale = 1. / (self.in_channels * self.out_channels)
+#         self.weights1 = nn.Parameter(self.scale * torch.rand(self.in_channels, self.out_channels, self.modes1, self.modes2, dtype=torch.cfloat))
+#         self.weights2 = nn.Parameter(self.scale * torch.rand(self.in_channels, self.out_channels, self.modes1, self.modes2, dtype=torch.cfloat))
+
+#     def forward(self, x, s=None):
+#         """
+#         Input shape (of x):     (batch, channels, ..., nx_in, ny_in)
+#         s:                      (list or tuple, length 2): desired spatial resolution (s,s) in output space
+#         """
+#         # Original resolution
+#         out_ft = list(x.shape)
+#         out_ft[1] = self.out_channels
+#         xsize = out_ft[-2:]
+
+#         # Compute Fourier coeffcients (un-scaled)
+#         x = fft.rfft2(x)
+
+#         # Multiply relevant Fourier modes
+#         out_ft = torch.zeros(*out_ft[:-2], xsize[-2], xsize[-1]//2 + 1, dtype=torch.cfloat, device=x.device)
+#         out_ft[..., :self.modes1, :self.modes2] = \
+#             compl_mul(x[..., :self.modes1, :self.modes2], self.weights1)
+#         out_ft[..., -self.modes1:, :self.modes2] = \
+#             compl_mul(x[..., -self.modes1:, :self.modes2], self.weights2)
+
+#         # Return to physical space
+#         if s is None or tuple(s) == tuple(xsize):
+#             x = fft.irfft2(out_ft, s=tuple(xsize))
+#         else:
+#             x = fft.irfft2(resize_rfft2(out_ft, s), s=s, norm="forward") / (xsize[-2] * xsize[-1])
+
+#         return x
+
 class SpectralConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, modes1, modes2):
-        """
-        Fourier integral operator layer defined for functions over the torus. Maps functions to functions.
-        """
-        super(SpectralConv2d, self).__init__()
-
+        super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-
-        # Number of Fourier modes to multiply, at most floor(N/2) + 1
-        self.modes1 = modes1 
+        self.modes1 = modes1
         self.modes2 = modes2
 
-        self.scale = 1. / (self.in_channels * self.out_channels)
-        self.weights1 = nn.Parameter(self.scale * torch.rand(self.in_channels, self.out_channels, self.modes1, self.modes2, dtype=torch.cfloat))
-        self.weights2 = nn.Parameter(self.scale * torch.rand(self.in_channels, self.out_channels, self.modes1, self.modes2, dtype=torch.cfloat))
+        self.scale = 1.0 / (in_channels * out_channels)
+        self.weights1 = nn.Parameter(
+            self.scale * torch.rand(in_channels, out_channels, modes1, modes2, dtype=torch.cfloat)
+        )
+        self.weights2 = nn.Parameter(
+            self.scale * torch.rand(in_channels, out_channels, modes1, modes2, dtype=torch.cfloat)
+        )
 
     def forward(self, x, s=None):
         """
-        Input shape (of x):     (batch, channels, ..., nx_in, ny_in)
-        s:                      (list or tuple, length 2): desired spatial resolution (s,s) in output space
+        x: (batch, in_channels, nx, ny)  (real)
+        returns: (batch, out_channels, s[0], s[1]) if s provided, else (batch, out_channels, nx, ny)
         """
-        # Original resolution
-        out_ft = list(x.shape)
-        out_ft[1] = self.out_channels
-        xsize = out_ft[-2:]
+        bsz, _, nx_phys, ny_phys = x.shape
 
-        # Compute Fourier coeffcients (un-scaled)
-        x = fft.rfft2(x)
+        # rFFT: (..., nx, ny//2 + 1) in the last two dims, complex dtype
+        x_ft = fft.rfft2(x)  # shape: (B, in_channels, nx, nyh)
+        nx = x_ft.size(-2)
+        nyh = x_ft.size(-1)
 
-        # Multiply relevant Fourier modes
-        out_ft = torch.zeros(*out_ft[:-2], xsize[-2], xsize[-1]//2 + 1, dtype=torch.cfloat, device=x.device)
-        out_ft[..., :self.modes1, :self.modes2] = \
-            compl_mul(x[..., :self.modes1, :self.modes2], self.weights1)
-        out_ft[..., -self.modes1:, :self.modes2] = \
-            compl_mul(x[..., -self.modes1:, :self.modes2], self.weights2)
+        # Be robust if requested modes exceed available size
+        m1 = min(self.modes1, nx)
+        m2 = min(self.modes2, nyh)
 
-        # Return to physical space
-        if s is None or tuple(s) == tuple(xsize):
-            x = fft.irfft2(out_ft, s=tuple(xsize))
+        # Low-frequency slices
+        x_low_top    = x_ft[..., :m1, :m2]   # top-left block
+        x_low_bottom = x_ft[..., -m1:, :m2]  # bottom-left block
+
+        # Multiply by learned complex weights -> (B, out_channels, m1, m2)
+        y_top    = compl_mul(x_low_top,    self.weights1[..., :m1, :m2])
+        y_bottom = compl_mul(x_low_bottom, self.weights2[..., :m1, :m2])
+
+        # Out-of-place placement into full Fourier grid via padding (no in-place slicing)
+        # F.pad pads the LAST TWO dims as (pad_lastdim_left, pad_lastdim_right, pad_seclastdim_top, pad_seclastdim_bottom)
+        # Place y_top at [:m1, :m2]
+        y_top_full = F.pad(y_top, (0, nyh - m2, 0, nx - m1))
+        # Place y_bottom at [-m1:, :m2]  -> pad "top" with nx - m1 rows
+        y_bottom_full = F.pad(y_bottom, (0, nyh - m2, nx - m1, 0))
+
+        # Combine (still complex). Shape: (B, out_channels, nx, nyh)
+        out_ft = y_top_full + y_bottom_full
+
+        # Back to real space
+        if s is None or tuple(s) == (nx_phys, ny_phys):
+            x_out = fft.irfft2(out_ft, s=(nx_phys, ny_phys))
         else:
-            x = fft.irfft2(resize_rfft2(out_ft, s), s=s, norm="forward") / (xsize[-2] * xsize[-1])
+            # resize_rfft2 should return a tensor with shape (..., s[0], s[1]//2+1)
+            # and keep rFFT Hermitian structure; then irfft2 with explicit size.
+            x_out = fft.irfft2(resize_rfft2(out_ft, s), s=s, norm="forward") / (nx_phys * ny_phys)
 
-        return x
+        return x_out
 
 
 class LinearFunctionals2d(nn.Module):
