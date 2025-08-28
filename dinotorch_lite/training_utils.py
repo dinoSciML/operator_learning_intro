@@ -74,6 +74,8 @@ def h1_training(model,loss_func_l2,loss_func_jac,train_loader, validation_loader
                      slow_jac = False):
     device = next(model.parameters()).device
 
+    output_projector = output_projector.to(device)
+
     if output_projector is None:
         def forward_pass(m):
             return model(torch.reshape(m, (-1, m.shape[-1])))
@@ -113,12 +115,11 @@ def h1_training(model,loss_func_l2,loss_func_jac,train_loader, validation_loader
             loss_l2 = loss_func_l2(u_pred, u)
             loss_jac = loss_func_jac(J_pred, J)
             loss = loss_l2 + jac_weight * loss_jac
-        
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        
             train_loss += loss.item() * m.shape[0]
+
 
         train_loss /= len(train_loader.dataset)
         
