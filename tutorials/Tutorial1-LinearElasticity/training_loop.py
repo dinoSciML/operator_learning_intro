@@ -46,7 +46,7 @@ n_trains = [25,50,100,200,400,800]
 #################################################################################
 # RBNO
 architecture = 'rbno'
-output_types = ['full_state', 'observable']
+output_types = ['full_state', 'observable'][1:]
 formulations = ['l2','h1']
 
 for n_train in n_trains:
@@ -65,7 +65,7 @@ for n_train in n_trains:
 # os.system('export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True')
 architecture = 'fno'
 output_type = 'full_state'
-formulations = ['l2','h1']
+formulations = ['l2','h1'][:1]
 
 for n_train in n_trains:
 	for formulation in formulations:

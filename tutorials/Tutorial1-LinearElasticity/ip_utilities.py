@@ -22,13 +22,15 @@ from dinotorch_lite.dinotorch_utils import weighted_l2_norm
 
 
 def map_estimate(neural_op,  model, R=None, iterations = 100,\
-         output_type = 'observable', verbose = False):
+         output_type = 'observable', verbose = False, input_encoder = None):
 
     assert output_type.lower() in ['observable','full_state']
     if output_type.lower() == 'full_state':
         assert R is not None
 
     mean = model.prior.mean
+    if input_encoder is not None:
+        mean = input_encoder.T@mean
 
     m = torch.tensor(mean.copy()[:], dtype=torch.float32)
     m.requires_grad = True
@@ -40,7 +42,7 @@ def map_estimate(neural_op,  model, R=None, iterations = 100,\
     likelihood = WeightedQuadraticMisfit.from_hippylib(model.misfit)
 
     if output_type == 'observable':
-        regularization = lambda m_r_surr:  torch.linalg.vector_norm(m - m0, 2)**2 
+        regularization = lambda m:  torch.linalg.vector_norm(m - m0, 2)**2 
     else:
         # R = R.to(device)
         regularization = lambda m: 0.5*weighted_l2_norm(R)(m- m0)
